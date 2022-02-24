@@ -1,0 +1,104 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: 'serverless-api-app
+
+  '
+Resources:
+  AWSApiGateway:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      StageName: Staging
+  LambdaFunction2:
+    Type: AWS::Serverless::Function
+    Properties:
+      Description: Function takes input from the SQS queue and send sms to the phone
+        number
+      CodeUri: LambdaFunction2
+      Handler: app2.lambda_handler
+      Runtime: python3.9
+      Policies:
+      - AmazonSNSFullAccess
+      - AmazonSQSFullAccess
+      - AWSLambdaBasicExecutionRole
+      - AmazonAPIGatewayAdministrator
+      Events:
+        APIEvent:
+          Type: HttpApi
+          Properties:
+            Path: /send_sms
+            Method: post
+            ApiId:
+              Ref: AWSApiGateway
+    Metadata:
+      SamResourceId: LambdaFunction2
+  SNSTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: SendSMSTopic
+      Subscription:
+      - Protocol: sqs
+        Endpoint:
+          Fn::GetAtt:
+          - SQSQueue
+          - Arn
+  SnsToSqsPolicy:
+    Type: AWS::SQS::QueuePolicy
+    Properties:
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Sid: Allow SNS publish to SQS
+          Effect: Allow
+          Principal:
+            Service: sns.amazonaws.com
+          Resource:
+            Fn::GetAtt:
+            - SQSQueue
+            - Arn
+          Action: SQS:SendMessage
+          Condition:
+            ArnEquals:
+              aws:SourceArn:
+                Ref: SNSTopic
+      Queues:
+      - Ref: SQSQueue
+  SQSQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: SendSMS_Queue
+  LambdaFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Description: Function takes input from the SQS queue and send sms to the phone
+        number
+      CodeUri: LambdaFunction
+      Handler: app.lambda_handler
+      Runtime: python3.9
+      Policies:
+      - AmazonSNSFullAccess
+      - AmazonSQSFullAccess
+      - AWSLambdaBasicExecutionRole
+      Events:
+        SQSEvent:
+          Type: SQS
+          Properties:
+            Queue:
+              Fn::GetAtt:
+              - SQSQueue
+              - Arn
+            BatchSize: 10
+    Metadata:
+      SamResourceId: LambdaFunction
+Outputs:
+  LambdaFunction:
+    Description: Send SMS Lambda Function ARN
+    Value:
+      Fn::GetAtt:
+      - LambdaFunction
+      - Arn
+  LambdaFunctionIamRole:
+    Description: Implicit IAM Role created for Send SMS function
+    Value:
+      Fn::GetAtt:
+      - LambdaFunction
+      - Arn
