@@ -1,0 +1,13 @@
+version = 0.1
+[default]
+[default.deploy]
+[default.deploy.parameters]
+stack_name = "SendSMSStack"
+s3_bucket = "aws-sam-cli-managed-default-samclisourcebucket-1sjx2kg0a1jlv"
+s3_prefix = "SendSMSStack"
+region = "us-east-1"
+profile = "punitha-test"
+confirm_changeset = true
+capabilities = "CAPABILITY_IAM"
+disable_rollback = true
+image_repositories = []

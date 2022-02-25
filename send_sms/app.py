@@ -11,12 +11,15 @@ def lambda_handler(event, context):
 
     number = Message_loads['number']
     message = Message_loads['message']
-
+    
+    print (number)
     
     sns_client = boto3.client('sns')
     aws_account_id = context.invoked_function_arn.split(":")[4]
     aws_region = context.invoked_function_arn.split(":")[3]
     response = sns_client.publish(
-    PhoneNumber='{0}{1}'.format('+91', number),
+    PhoneNumber= number,
     Message= message
     )
+    
+    print (response)

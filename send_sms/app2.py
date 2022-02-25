@@ -18,3 +18,13 @@ def lambda_handler(event, context):
     TopicArn='arn:aws:sns:{0}:{1}:SendSMSTopic'.format(aws_region, aws_account_id),
     Message= json_dump
     )
+    
+    return {
+        "statusCode": 200,
+        "body": json.dumps({
+            "Details": "Message being processed...",
+            "number": number,
+            "message": message,
+            "unique request id": str(uuid.uuid1())
+        })
+    }
